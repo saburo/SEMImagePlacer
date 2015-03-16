@@ -22,15 +22,15 @@
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QColor, QMessageBox
-from qgis.core import QgsGeometry, QgsPoint, QgsRasterLayer, QgsRasterTransparency, QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsMapLayerRegistry
-from qgis.gui import QgsMapToolEmitPoint
+from qgis.core import QgsGeometry, QgsPoint, QgsRasterLayer, QgsRasterTransparency, QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsMapLayerRegistry, QgsCoordinateReferenceSystem
+from qgis.gui import QgsMapToolEmitPoint, QgsGenericProjectionSelector
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
 from SEMImagePlacer_dialog import SEMImagePlacerDialog
 
 import os.path, os
-import sys, re, time
+import sys, re, time, subprocess
 from math import cos, sin, atan2, radians, degrees
 
 class SEMImagePlacer:
@@ -435,12 +435,12 @@ class SEMImagePlacer:
         imgPath = os.path.join(img['dir'], img['img'])
         destnodata = '-dstnodata 0' # delete black -> transparent
         destnodata = '' # just cropped out
-        form = '{0} -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q -cutline {3} -dstalpha -of GTiff {4} {5}'
+        form = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q -cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
         self.checkandDeleteFiles(img['clip'])
         self.makeClippingShapeFiles(img)
         cmd = form.format(self.gdalwarp, self.crs, destnodata, shapefilepath, imgPath, img['clip'])
         # # destnodata = ''
-        res = os.system(cmd)
+        res = subprocess.call(cmd, shell=True)
 
     def rotateCoordinates(self, x, y, sinD, cosD):
         rx = x * cosD - y * sinD
