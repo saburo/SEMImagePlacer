@@ -83,7 +83,6 @@ class SEMImagePlacer:
         self.connects()
         self.crsId = None
         self.crsType = 0
-        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -199,6 +198,7 @@ class SEMImagePlacer:
             return True
 
         self.init_vars()
+        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
         self.imgPaths = QFileDialog.getOpenFileNames(self.iface.mainWindow(), 'Select image files', '~/Desktop/', 'Images (*.tif *.jpg *.png)')
         if not self.imgPaths: return False
 
