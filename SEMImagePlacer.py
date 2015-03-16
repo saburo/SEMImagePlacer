@@ -20,9 +20,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QObject, SIGNAL, Qt
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, \
+                         QObject, SIGNAL, Qt
 from PyQt4.QtGui import QAction, QIcon, QFileDialog, QColor, QMessageBox
-from qgis.core import QgsGeometry, QgsPoint, QgsRasterLayer, QgsRasterTransparency, QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsMapLayerRegistry, QgsCoordinateReferenceSystem
+from qgis.core import QgsGeometry, QgsPoint, QgsRasterLayer, \
+                      QgsRasterTransparency, QgsVectorLayer, QgsFeature,\
+                      QgsVectorFileWriter, QgsMapLayerRegistry, \
+                      QgsCoordinateReferenceSystem
 from qgis.gui import QgsMapToolEmitPoint, QgsGenericProjectionSelector
 # Initialize Qt resources from file resources.py
 import resources_rc
@@ -79,7 +83,9 @@ class SEMImagePlacer:
         self.selectingRefFlag = 0
         self.imgData = []
         self.layers = []
-        self.referencePoints = {'1':{'from': [None,None], 'to': [None,None]}, '2': {'from': [None,None], 'to':[None,None]}}
+        self.referencePoints = {
+            '1':{'from': [None,None], 'to': [None,None]},
+            '2': {'from': [None,None], 'to':[None,None]}}
         self.connects()
         self.crsId = None
         self.crsType = 0
@@ -209,7 +215,6 @@ class SEMImagePlacer:
         else:
             self.crsId = self.canvas.mapRenderer().destinationCrs().srsid()
             self.crsType = self.canvas.mapRenderer().destinationCrs().CrsType()
-        print '{}, {}'.format(self.crsId, self.crsType)
 
         self.disableProjectionDialog()
         self.imgData = map(self.parseSEMTextFile, self.imgPaths)
@@ -355,7 +360,6 @@ class SEMImagePlacer:
         map(self.makeClippedImages, adjData)
         layers = map(self.addImageFiles, adjData)
         center = self.getCenter(adjData)
-        # self.addPoint([center['x'], center['y']], 'post-center')
 
         self.dlg.prgBar_1.setValue(100)
         self.init_vars()
@@ -396,7 +400,6 @@ class SEMImagePlacer:
                                                         'CP1250',
                                                         None,
                                                         'ESRI Shapefile')
-        # print 'making a clipping vector layer: ' + str(error)
 
     def getCenter(self, inputData):
         tmpX = []
@@ -458,8 +461,6 @@ class SEMImagePlacer:
             tmp['rotate_y'] = tmp['ps'] * sinD
             tmp['h'] = tmp['h'] * tmp['ps']
             tmp['w'] = tmp['w'] * tmp['ps']
-            # tmp['h'] = cosD * tmp['h'] + sinD * tmp['w'] # new
-            # tmp['w'] = cosD * tmp['w'] + sinD * tmp['h'] # new
             tmp['x'] = tmp['x'] - tmp['w'] / 2.0
             tmp['y'] = tmp['y'] + tmp['h'] / 2.0
             rc = self.rotateCoordinates(tmp['x'] - center['x'], tmp['y'] - center['y'], sinD, cosD)
@@ -473,13 +474,12 @@ class SEMImagePlacer:
     def makeClippedImages(self, img):
         shapefilepath = os.path.join(img['dir'], 'clip', img['name'] + '.shp')
         imgPath = os.path.join(img['dir'], img['img'])
-        destnodata = '-dstnodata 0' # delete black -> transparent
+        destnodata = '-dstnodata 0' # black pixcels are going to be transparent
         destnodata = '' # just cropped out
         form = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q -cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
         self.checkandDeleteFiles(img['clip'])
         self.makeClippingShapeFiles(img)
         cmd = form.format(self.gdalwarp, self.crs, destnodata, shapefilepath, imgPath, img['clip'])
-        # # destnodata = ''
         res = subprocess.call(cmd, shell=True)
 
     def rotateCoordinates(self, x, y, sinD, cosD):
@@ -521,13 +521,10 @@ class SEMImagePlacer:
         QgsMapLayerRegistry.instance().addMapLayers([centerPoint])
 
     def disableProjectionDialog(self):
-        print 'disabled'
         self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
         QSettings().setValue(u'Projections/defaultBehaviour', u'useGlobal')
-        print QSettings().value(u'Projections/defaultBehaviour')
 
     def enableProjectionDialog(self):
-        print 'enabled'
         QSettings().setValue(u'Projections/defaultBehaviour', self.projectionBehav)
 
     def addImgLayer(self, imgPath, imgName):
@@ -542,7 +539,6 @@ class SEMImagePlacer:
         except:
             clipFlag = False
             imgPath = os.path.join(imgData['dir'], imgData['img'])
-        # self.iface.addRasterLayer(imgPath, imgData['name'])
         self.addImgLayer(imgPath, imgData['name'])
 
         l = self.canvas.currentLayer()
@@ -551,7 +547,6 @@ class SEMImagePlacer:
             # clip out scale bars
             lr = l.renderer()
             lr.setAlphaBand(2)
-            #
             # lrt = lr.rasterTransparency()
             # x = QgsRasterTransparency.TransparentSingleValuePixel()
             # x.max = 0
