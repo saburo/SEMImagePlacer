@@ -7,28 +7,12 @@
     <x>0</x>
     <y>0</y>
     <width>692</width>
-    <height>292</height>
+    <height>238</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>SEM Image Placer</string>
   </property>
-  <widget class="QDialogButtonBox" name="button_box">
-   <property name="geometry">
-    <rect>
-     <x>340</x>
-     <y>250</y>
-     <width>341</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
   <widget class="QPushButton" name="Btn_1">
    <property name="geometry">
     <rect>
@@ -38,27 +22,33 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="focusPolicy">
+    <enum>Qt::StrongFocus</enum>
+   </property>
    <property name="text">
-    <string>start</string>
+    <string>Place Image</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="prgBar_1">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>210</y>
-     <width>531</width>
+     <y>200</y>
+     <width>161</width>
      <height>23</height>
     </rect>
    </property>
    <property name="maximum">
-    <number>0</number>
+    <number>100</number>
    </property>
    <property name="value">
     <number>0</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="invertedAppearance">
+    <bool>false</bool>
    </property>
    <property name="textDirection">
     <enum>QProgressBar::TopToBottom</enum>
@@ -68,13 +58,13 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>20</y>
+     <y>10</y>
      <width>651</width>
      <height>101</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="2">
+    <item row="3" column="2">
      <widget class="QLabel" name="label_2">
       <property name="text">
        <string>&gt;&gt;</string>
@@ -88,35 +78,21 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0" alignment="Qt::AlignHCenter">
+    <item row="3" column="0" alignment="Qt::AlignHCenter">
      <widget class="QLabel" name="label_4">
       <property name="text">
        <string>2</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <widget class="QLineEdit" name="Txt_Ref2From"/>
-    </item>
-    <item row="2" column="4">
-     <widget class="QToolButton" name="Btn_Ref2">
-      <property name="text">
-       <string>select</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="4">
-     <widget class="QToolButton" name="Btn_Ref1">
-      <property name="text">
-       <string>select</string>
-      </property>
-     </widget>
-    </item>
     <item row="1" column="1">
-     <widget class="QLineEdit" name="Txt_Ref1From"/>
-    </item>
-    <item row="2" column="3">
-     <widget class="QLineEdit" name="Txt_Ref2To"/>
+     <widget class="QLineEdit" name="Txt_Ref1From">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+     </widget>
     </item>
     <item row="1" column="2">
      <widget class="QLabel" name="label">
@@ -126,7 +102,38 @@
      </widget>
     </item>
     <item row="1" column="3">
-     <widget class="QLineEdit" name="Txt_Ref1To"/>
+     <widget class="QLineEdit" name="Txt_Ref1To">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="Txt_Ref2From">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="4">
+     <widget class="QToolButton" name="Btn_Ref2">
+      <property name="text">
+       <string>select</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="3">
+     <widget class="QLineEdit" name="Txt_Ref2To">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+     </widget>
     </item>
     <item row="0" column="0" alignment="Qt::AlignHCenter">
      <widget class="QLabel" name="label_5">
@@ -156,6 +163,13 @@ Point</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="4">
+     <widget class="QToolButton" name="Btn_Ref1">
+      <property name="text">
+       <string>select</string>
       </property>
      </widget>
     </item>
@@ -223,38 +237,5 @@ Point</string>
   </widget>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>button_box</sender>
-   <signal>accepted()</signal>
-   <receiver>SEMImagePlacerDialogBase</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_box</sender>
-   <signal>rejected()</signal>
-   <receiver>SEMImagePlacerDialogBase</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

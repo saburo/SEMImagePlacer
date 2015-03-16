@@ -81,6 +81,9 @@ class SEMImagePlacer:
         self.layers = []
         self.referencePoints = {'1':{'from': [None,None], 'to': [None,None]}, '2': {'from': [None,None], 'to':[None,None]}}
         self.connects()
+        self.crsId = None
+        self.crsType = 0
+        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -199,13 +202,21 @@ class SEMImagePlacer:
         self.imgPaths = QFileDialog.getOpenFileNames(self.iface.mainWindow(), 'Select image files', '~/Desktop/', 'Images (*.tif *.jpg *.png)')
         if not self.imgPaths: return False
 
+        if self.projectionBehav == u'prompt':
+            projSelector = QgsGenericProjectionSelector()
+            projSelector.exec_()
+            self.crsId, self.crsType = self.getCrsInfo(projSelector.selectedAuthId())
+        else:
+            self.crsId = self.canvas.mapRenderer().destinationCrs().srsid()
+            self.crsType = self.canvas.mapRenderer().destinationCrs().CrsType()
+        print '{}, {}'.format(self.crsId, self.crsType)
+
+        self.disableProjectionDialog()
         self.imgData = map(self.parseSEMTextFile, self.imgPaths)
-        # center = self.getCenter(self.imgData)
         myList = self.simpleImageLoading(self.imgData, 0, 0)
         map(self.saveWorldFile, myList)
         self.layers = map(self.addImageFiles, myList)
-        center = self.getCenter(self.imgData)
-        # self.addPoint([center['x'], center['y']], 'pre-center')
+        self.enableProjectionDialog()
 
         # show the dialog
         self.dlg.show()
@@ -242,32 +253,54 @@ class SEMImagePlacer:
         self.imgPaths = []
         self.imgData = []
 
+    def drawStatusBar(self, text):
+        self.iface.mainWindow().statusBar().showMessage(str(text))
+
+    def getCrsInfo(self, authId):
+        crsType, crsId = authId.split(':')
+        if crsType is 'EPSG':
+            crsType = QgsCoordinateReferenceSystem.EpsgCrsId
+        elif crsType is 'USER':
+            crsType = QgsCoordinateReferenceSystem.InternalCrsId
+        else:
+            crsType = QgsCoordinateReferenceSystem.PostgisCrsId
+        return [int(crsId), crsType]
+
     def selectPoints(self, point, button):
         ref = self.referencePoints[str(self.selectingRefFlag)]
         if ref['from'][0] is None:
             ref['from'][0] = point.x()
             ref['from'][1] = point.y()
+            if ref['to'][0] is None:
+                self.drawStatusBar(u'Selecting reference point {} "To"'.format(self.selectingRefFlag))
         else:
             ref['to'][0] = point.x()
             ref['to'][1] = point.y()
             self.finishSelectingRef()
-        QMessageBox.information(self.iface.mainWindow(), 'test', '{}, {}'.format(point.x(), point.y()))
+        # QMessageBox.information(self.iface.mainWindow(), 'test', '{}, {}'.format(point.x(), point.y()))
 
     def selectRef1(self):
         self.selectingRefFlag = 1
+        self.referencePoints['1']['from'] = [None, None]
+        self.referencePoints['1']['to'] = [None, None]
         self.setUpSelectiongRef(self.selectingRefFlag)
 
     def selectRef2(self):
         self.selectingRefFlag = 2
+        self.referencePoints['2']['from'] = [None, None]
+        self.referencePoints['2']['to'] = [None, None]
         self.setUpSelectiongRef(self.selectingRefFlag)
 
     def setUpSelectiongRef(self, refNumber):
-        res = QMessageBox.information(self.iface.mainWindow(),"Select Points", 'Click the points', 'OK', 'Cancel')
-        if res: return False
+        # res = QMessageBox.information(self.iface.mainWindow(),"Select Points", 'Click the points', 'OK', 'Cancel')
+        # if res: return False
+        if self.referencePoints[str(refNumber)]['from'][0] is None:
+            pointName = 'From'
+        else:
+            pointName = 'To'
+        self.drawStatusBar(u'Selecting reference point {} "{}"'.format(refNumber, pointName))
         self.dlg.setWindowState(Qt.WindowMinimized)
         self.selectingRefFlag = refNumber
-        self.referencePoints[str(refNumber)]['from'] = [None, None]
-        self.referencePoints[str(refNumber)]['to'] = [None, None]
         self.canvas.setMapTool(self.clickTool)
 
     def finishSelectingRef(self):
@@ -281,6 +314,7 @@ class SEMImagePlacer:
             self.dlg.Txt_Ref2To.setText(', '.join(map(str, self.referencePoints['2']['to'])))
         self.dlg.setWindowState(Qt.WindowActive)
         self.calcRotationOffset()
+        self.drawStatusBar('')
 
     def calcRotationOffset(self):
         if self.referencePoints['1']['from'][0] is not None and self.referencePoints['2']['from'][0] is not None:
@@ -311,6 +345,7 @@ class SEMImagePlacer:
         self.layers = []
 
     def doSomething(self):
+        self.disableProjectionDialog()
         self.deleteLayers()
         rotation_deg = float(self.dlg.SpnBox_Rotation.value())
         offsetX = float(self.dlg.Txt_OffsetX.text())
@@ -325,6 +360,7 @@ class SEMImagePlacer:
         self.dlg.prgBar_1.setValue(100)
         self.init_vars()
         self.dlg.close()
+        self.enableProjectionDialog()
 
     def makeClippingShapeFiles(self, inputData):
         r = 0.9333333 # scale var offset
@@ -484,6 +520,21 @@ class SEMImagePlacer:
 
         QgsMapLayerRegistry.instance().addMapLayers([centerPoint])
 
+    def disableProjectionDialog(self):
+        print 'disabled'
+        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
+        QSettings().setValue(u'Projections/defaultBehaviour', u'useGlobal')
+        print QSettings().value(u'Projections/defaultBehaviour')
+
+    def enableProjectionDialog(self):
+        print 'enabled'
+        QSettings().setValue(u'Projections/defaultBehaviour', self.projectionBehav)
+
+    def addImgLayer(self, imgPath, imgName):
+        rlayer = QgsRasterLayer(imgPath, imgName)
+        rlayer.setCrs(QgsCoordinateReferenceSystem(self.crsId, self.crsType))
+        QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+
     def addImageFiles(self, imgData):
         clipFlag = True
         try:
@@ -491,7 +542,8 @@ class SEMImagePlacer:
         except:
             clipFlag = False
             imgPath = os.path.join(imgData['dir'], imgData['img'])
-        self.iface.addRasterLayer(imgPath, imgData['name'])
+        # self.iface.addRasterLayer(imgPath, imgData['name'])
+        self.addImgLayer(imgPath, imgData['name'])
 
         l = self.canvas.currentLayer()
         if clipFlag:
