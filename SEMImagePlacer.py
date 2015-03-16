@@ -191,6 +191,10 @@ class SEMImagePlacer:
             self.iface.removeToolBarIcon(action)
 
     def run(self):
+        if self.selectingRefFlag is not 0:
+            self.setUpSelectiongRef(self.selectingRefFlag)
+            return True
+
         self.init_vars()
         self.imgPaths = QFileDialog.getOpenFileNames(self.iface.mainWindow(), 'Select image files', '~/Desktop/', 'Images (*.tif *.jpg *.png)')
         if not self.imgPaths: return False
