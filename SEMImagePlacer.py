@@ -78,7 +78,8 @@ class SEMImagePlacer:
 
         self.canvas = self.iface.mapCanvas()
         self.clickTool = QgsMapToolEmitPoint(self.canvas)
-        self.gdalwarp = os.path.join(QSettings().value('GdalTools/gdalPath'), 'gdalwarp')
+        self.gdalwarp = os.path.join(QSettings().value('GdalTools/gdalPath'),
+                                     'gdalwarp')
         self.crs = "+proj=longlat +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
         self.selectingRefFlag = 0
         self.imgData = []
@@ -204,11 +205,14 @@ class SEMImagePlacer:
             return True
 
         self.init_vars()
-        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
-        self.imgPaths = QFileDialog.getOpenFileNames(self.iface.mainWindow(), 'Select image files', '~/Desktop/', 'Images (*.tif *.jpg *.png)')
+        self.projBehav  = QSettings().value(u'Projections/defaultBehaviour')
+        self.imgPaths = QFileDialog.getOpenFileNames(self.iface.mainWindow(),
+                                                     'Select image files',
+                                                     '~/',
+                                                     'Images (*.tif *.jpg *.png)')
         if not self.imgPaths: return False
 
-        if self.projectionBehav == u'prompt':
+        if self.projBehav  == u'prompt':
             projSelector = QgsGenericProjectionSelector()
             projSelector.exec_()
             self.crsId, self.crsType = self.getCrsInfo(projSelector.selectedAuthId())
@@ -223,36 +227,42 @@ class SEMImagePlacer:
         self.layers = map(self.addImageFiles, myList)
         self.enableProjectionDialog()
 
-        # show the dialog
         self.dlg.show()
-        # Run the dialog event loop
         result = self.dlg.exec_()
-        # See if OK was pressed
         if result:
             pass
             # self.canvas.setCanvasColor(QColor('black'))
 
-
-#####################################################################
-## Functions
-#####################################################################
-
+    """
+    Functions
+    """
     def connects(self):
-        QObject.connect(self.dlg.Btn_1, SIGNAL('clicked(bool)'), self.doSomething)
-        QObject.connect(self.dlg.Btn_Ref1, SIGNAL('clicked(bool)'), self.selectRef1)
-        QObject.connect(self.dlg.Btn_Ref2, SIGNAL('clicked(bool)'), self.selectRef2)
-        QObject.connect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.selectPoints)
+        QObject.connect(self.dlg.Btn_1,
+                        SIGNAL('clicked(bool)'), self.doSomething)
+        QObject.connect(self.dlg.Btn_Ref1,
+                        SIGNAL('clicked(bool)'), self.selectRef1)
+        QObject.connect(self.dlg.Btn_Ref2,
+                        SIGNAL('clicked(bool)'), self.selectRef2)
+        QObject.connect(self.clickTool,
+                        SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"),
+                        self.selectPoints)
         QObject.connect(self.dlg, SIGNAL("closeEvent()"), self.init_vars)
 
     def disconnects(self):
-        QObject.disconnect(self.dlg.Btn_1, SIGNAL('clicked(bool)'), self.doSomething)
-        QObject.disconnect(self.dlg.Btn_Ref1, SIGNAL('clicked(bool)'), self.selectRef1)
-        QObject.disconnect(self.dlg.Btn_Ref2, SIGNAL('clicked(bool)'), self.selectRef2)
-        QObject.disconnect(self.clickTool, SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"), self.selectPoints)
+        QObject.disconnect(self.dlg.Btn_1,
+                           SIGNAL('clicked(bool)'), self.doSomething)
+        QObject.disconnect(self.dlg.Btn_Ref1,
+                           SIGNAL('clicked(bool)'), self.selectRef1)
+        QObject.disconnect(self.dlg.Btn_Ref2,
+                           SIGNAL('clicked(bool)'), self.selectRef2)
+        QObject.disconnect(self.clickTool,
+                           SIGNAL("canvasClicked(const QgsPoint &, Qt::MouseButton)"),
+                           self.selectPoints)
         QObject.disconnect(self.dlg, SIGNAL("closeEvent()"), self.init_vars)
 
     def init_vars(self):
-        self.referencePoints = {'1':{'from': [None,None], 'to': [None,None]}, '2': {'from': [None,None], 'to':[None,None]}}
+        self.referencePoints = {'1':  {'from': [None,None], 'to': [None,None]},
+                                '2':  {'from': [None,None], 'to': [None,None]}}
         self.selectingRefFlag = 0
         self.layers = []
         self.imgPaths = []
@@ -277,12 +287,12 @@ class SEMImagePlacer:
             ref['from'][0] = point.x()
             ref['from'][1] = point.y()
             if ref['to'][0] is None:
-                self.drawStatusBar(u'Selecting reference point {} "To"'.format(self.selectingRefFlag))
+                statBarTxt = u'Selecting reference point {} "To"'
+                self.drawStatusBar(statBarTxt.format(self.selectingRefFlag))
         else:
             ref['to'][0] = point.x()
             ref['to'][1] = point.y()
             self.finishSelectingRef()
-        # QMessageBox.information(self.iface.mainWindow(), 'test', '{}, {}'.format(point.x(), point.y()))
 
     def selectRef1(self):
         self.selectingRefFlag = 1
@@ -297,13 +307,12 @@ class SEMImagePlacer:
         self.setUpSelectiongRef(self.selectingRefFlag)
 
     def setUpSelectiongRef(self, refNumber):
-        # res = QMessageBox.information(self.iface.mainWindow(),"Select Points", 'Click the points', 'OK', 'Cancel')
-        # if res: return False
         if self.referencePoints[str(refNumber)]['from'][0] is None:
             pointName = 'From'
         else:
             pointName = 'To'
-        self.drawStatusBar(u'Selecting reference point {} "{}"'.format(refNumber, pointName))
+        statBarTxt = u'Selecting reference point {} "{}"'
+        self.drawStatusBar(statBarTxt.format(refNumber, pointName))
         self.dlg.setWindowState(Qt.WindowMinimized)
         self.selectingRefFlag = refNumber
         self.canvas.setMapTool(self.clickTool)
@@ -312,17 +321,22 @@ class SEMImagePlacer:
         refNumber = str(self.selectingRefFlag)
         self.canvas.unsetMapTool(self.clickTool)
         if self.selectingRefFlag == 1:
-            self.dlg.Txt_Ref1From.setText(', '.join(map(str, self.referencePoints['1']['from'])))
-            self.dlg.Txt_Ref1To.setText(', '.join(map(str, self.referencePoints['1']['to'])))
+            self.dlg.Txt_Ref1From.setText(', '.join(map(str,
+                                          self.referencePoints['1']['from'])))
+            self.dlg.Txt_Ref1To.setText(', '.join(map(str,
+                                        self.referencePoints['1']['to'])))
         else:
-            self.dlg.Txt_Ref2From.setText(', '.join(map(str, self.referencePoints['2']['from'])))
-            self.dlg.Txt_Ref2To.setText(', '.join(map(str, self.referencePoints['2']['to'])))
+            self.dlg.Txt_Ref2From.setText(', '.join(map(str,
+                                          self.referencePoints['2']['from'])))
+            self.dlg.Txt_Ref2To.setText(', '.join(map(str,
+                                        self.referencePoints['2']['to'])))
         self.dlg.setWindowState(Qt.WindowActive)
         self.calcRotationOffset()
         self.drawStatusBar('')
 
     def calcRotationOffset(self):
-        if self.referencePoints['1']['from'][0] is not None and self.referencePoints['2']['from'][0] is not None:
+        if self.referencePoints['1']['from'][0] is not None and \
+           self.referencePoints['2']['from'][0] is not None:
             center = self.getCenter(self.imgData)
 
             ref1To   = self.referencePoints['1']['to']
@@ -331,13 +345,15 @@ class SEMImagePlacer:
             ref2From = self.referencePoints['2']['from']
 
             # rotation degree
-            radRotate = atan2(ref1From[0] - ref2From[0], ref1From[1] - ref2From[1]) - atan2(ref1To[0] - ref2To[0], ref1To[1] - ref2To[1])
+            deg1 = atan2(ref1From[0] - ref2From[0], ref1From[1] - ref2From[1])
+            deg2 = atan2(ref1To[0] - ref2To[0], ref1To[1] - ref2To[1])
+            radRotate = deg1 - deg2
             rotationDegree = degrees(radRotate)
 
             ref1From_rotated = self.rotateCoordinates(ref1From[0] - center['x'],
-                                                        ref1From[1] - center['y'],
-                                                        sin(radRotate),
-                                                        cos(radRotate))
+                                                      ref1From[1] - center['y'],
+                                                      sin(radRotate),
+                                                      cos(radRotate))
             offsetX = ref1To[0] - (ref1From_rotated[0] + center['x'])
             offsetY = ref1To[1] - (ref1From_rotated[1] + center['y'])
 
@@ -346,7 +362,8 @@ class SEMImagePlacer:
             self.dlg.SpnBox_Rotation.setValue(rotationDegree)
 
     def deleteLayers(self):
-        map(lambda x: QgsMapLayerRegistry.instance().removeMapLayer(x), self.layers)
+        map(lambda x: QgsMapLayerRegistry.instance().removeMapLayer(x),
+            self.layers)
         self.layers = []
 
     def doSomething(self):
@@ -355,7 +372,10 @@ class SEMImagePlacer:
         rotation_deg = float(self.dlg.SpnBox_Rotation.value())
         offsetX = float(self.dlg.Txt_OffsetX.text())
         offsetY = float(self.dlg.Txt_OffsetY.text())
-        adjData = self.adjustCoordinates(self.imgData, rotation_deg, offsetX, offsetY)
+        adjData = self.adjustCoordinates(self.imgData,
+                                         rotation_deg,
+                                         offsetX,
+                                         offsetY)
         map(self.saveWorldFile, adjData)
         map(self.makeClippedImages, adjData)
         layers = map(self.addImageFiles, adjData)
@@ -367,7 +387,7 @@ class SEMImagePlacer:
         self.enableProjectionDialog()
 
     def makeClippingShapeFiles(self, inputData):
-        r = 0.9333333 # scale var offset
+        r = 0.9333333  # image height w/o scale bar (information area)
         sinD = sin(inputData['radian'])
         cosD = cos(inputData['radian'])
 
@@ -380,7 +400,8 @@ class SEMImagePlacer:
         for k, point in enumerate(points):
             points[k] = self.rotateCoordinates(point[0], point[1], sinD, cosD)
         for k, point in enumerate(points):
-            points[k] = QgsPoint(point[0] + inputData['x'], point[1] + inputData['y'])
+            points[k] = QgsPoint(point[0] + inputData['x'],
+                                 point[1] + inputData['y'])
 
         clippingNode = QgsVectorLayer('polygon', inputData['name'], 'memory')
         clippingNode.startEditing()
@@ -392,11 +413,13 @@ class SEMImagePlacer:
         clippingNode.commitChanges()
         clippingNode.updateExtents()
 
-        # save shape file
-        if not os.path.exists(os.path.join(inputData['dir'], 'clip')):
-            os.makedirs(os.path.join(inputData['dir'], 'clip'))
+        """ save shape file """
+        clipDir = os.path.join(inputData['dir'], 'clip') 
+        if not os.path.exists(clipDir):
+            os.makedirs(clipDir)
+        shapeFilePath = os.path.join(clipDir, inputData['name'] + '.shp')
         error = QgsVectorFileWriter.writeAsVectorFormat(clippingNode,
-                                                        os.path.join(inputData['dir'], 'clip', inputData['name'] + '.shp'),
+                                                        shapeFilePath,
                                                         'CP1250',
                                                         None,
                                                         'ESRI Shapefile')
@@ -421,7 +444,9 @@ class SEMImagePlacer:
         maxmin = map(lambda x: x[index], listOfDictionary)
         maxValue = max(maxmin)
         minValue = min(maxmin)
-        return {'max': maxValue, 'min': minValue, 'center': minValue + (maxValue - minValue) / 2.0}
+        return {'max': maxValue, 
+                'min': minValue,
+                'center': minValue + (maxValue - minValue) / 2.0}
 
     def simpleImageLoading(self, inData, offsetX=0, offsetY=0):
         out = []
@@ -441,7 +466,8 @@ class SEMImagePlacer:
             out.append(tmp)
         return out
 
-    def adjustCoordinates(self, imgData, rotation_degree=0, offsetX=0, offsetY=0):
+    def adjustCoordinates(self, imgData,
+                          rotation_degree=0, offsetX=0, offsetY=0):
         deg = radians(rotation_degree)
         sinD = sin(deg)
         cosD = cos(deg)
@@ -463,23 +489,28 @@ class SEMImagePlacer:
             tmp['w'] = tmp['w'] * tmp['ps']
             tmp['x'] = tmp['x'] - tmp['w'] / 2.0
             tmp['y'] = tmp['y'] + tmp['h'] / 2.0
-            rc = self.rotateCoordinates(tmp['x'] - center['x'], tmp['y'] - center['y'], sinD, cosD)
+            rc = self.rotateCoordinates(tmp['x'] - center['x'],
+                                        tmp['y'] - center['y'], sinD, cosD)
             tmp['x'] = rc[0] + offsetX + center['x']
             tmp['y'] = rc[1] + offsetY + center['y']
             tmp['ps'] = cosD * tmp['ps']
-            tmp['clip'] = os.path.join(tmp['dir'], 'clip', tmp['name'] + '_clip.tif')
+            tmp['clip'] = os.path.join(tmp['dir'],
+                                       'clip', 
+                                       tmp['name'] + '_clip.tif')
             out.append(tmp)
         return out
 
     def makeClippedImages(self, img):
-        shapefilepath = os.path.join(img['dir'], 'clip', img['name'] + '.shp')
+        shapeFilePath = os.path.join(img['dir'], 'clip', img['name'] + '.shp')
         imgPath = os.path.join(img['dir'], img['img'])
-        destnodata = '-dstnodata 0' # black pixcels are going to be transparent
-        destnodata = '' # just cropped out
-        form = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q -cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
+        destnodata = '-dstnodata 0'  # black pixcels become transparent
+        destnodata = ''  # just cropped out
+        form = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q \
+                 -cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
         self.checkandDeleteFiles(img['clip'])
         self.makeClippingShapeFiles(img)
-        cmd = form.format(self.gdalwarp, self.crs, destnodata, shapefilepath, imgPath, img['clip'])
+        cmd = form.format(self.gdalwarp, self.crs, destnodata,
+                          shapeFilePath, imgPath, img['clip'])
         res = subprocess.call(cmd, shell=True)
 
     def rotateCoordinates(self, x, y, sinD, cosD):
@@ -495,13 +526,14 @@ class SEMImagePlacer:
         except:
             rotatex = 0.0
             rotatey = 0.0
-        out.append(str(imgData['ps'])) # pixel size x
-        out.append(str(rotatex)) # rotation x
-        out.append(str(rotatey)) # rotation y
-        out.append(str(imgData['ps'] * -1.0)) # pixel size y
-        out.append(str(imgData['x'] * 1.0)) # x coordinates
-        out.append(str(imgData['y'])) # y coordinates
-        worldfilePath = os.path.join(imgData['dir'], imgData['name'] + '.' + imgData['world'])
+        out.append(str(imgData['ps']))         # pixel size x
+        out.append(str(rotatex))               # rotation x
+        out.append(str(rotatey))               # rotation y
+        out.append(str(imgData['ps'] * -1.0))  # pixel size y
+        out.append(str(imgData['x'] * 1.0))    # x coordinates
+        out.append(str(imgData['y']))          # y coordinates
+        worldfilePath = os.path.join(imgData['dir'], 
+                                     imgData['name'] + '.' + imgData['world'])
         f = open(worldfilePath, 'w')
         f.write('\n'.join(out))
         f.close()
@@ -521,11 +553,11 @@ class SEMImagePlacer:
         QgsMapLayerRegistry.instance().addMapLayers([centerPoint])
 
     def disableProjectionDialog(self):
-        self.projectionBehav = QSettings().value(u'Projections/defaultBehaviour')
+        self.projBehav  = QSettings().value(u'Projections/defaultBehaviour')
         QSettings().setValue(u'Projections/defaultBehaviour', u'useGlobal')
 
     def enableProjectionDialog(self):
-        QSettings().setValue(u'Projections/defaultBehaviour', self.projectionBehav)
+        QSettings().setValue(u'Projections/defaultBehaviour', self.projBehav )
 
     def addImgLayer(self, imgPath, imgName):
         rlayer = QgsRasterLayer(imgPath, imgName)
@@ -556,7 +588,8 @@ class SEMImagePlacer:
         return l.id()
 
     def checkandDeleteFiles(self, path):
-        fileName = os.path.basename(path).split(os.extsep)[0].replace('_clip', '')
+        fileName = os.path.basename(path).split(os.extsep)[0].replace('_clip',
+                                                                      '')
         fileDir = os.path.dirname(path)
         exts = ['shp', 'cpg', 'dbf', 'prj', 'shx', 'qpj']
         if os.path.exists(path):
@@ -571,15 +604,11 @@ class SEMImagePlacer:
                 pass
 
     def sanitizePath(self, path):
-        path = os.path.expanduser(path)
-        path = os.path.expandvars(path)
+        path = os.path.expandvars(os.path.expanduser(path))
         return os.path.abspath(path)
 
     def getWorldFileExt(self, ext):
-        if len(ext) == 3:
-            return str(ext[0]) + str(ext[2]) + 'w'
-        else:
-            return ext + 'w'
+        return str(ext[0]) + str(ext[2]) + 'w' if len(ext) == 3 else ext + 'w'
 
     def parseSEMTextFile(self, imgFilePath):
         imgPath = self.sanitizePath(imgFilePath)
@@ -601,11 +630,11 @@ class SEMImagePlacer:
 
         # units are micron
         return {'img': p.group('name'),
-            'world': self.getWorldFileExt(tmp[1]),
-            'dir': str(imgDir),
-            'name': str(imgName),
-            'x':  float(p.group('x')) / -1000.0,
-            'y':  float(p.group('y')) / 1000.0,
-            'ps': float(p.group('pxsize')) / 1000.0,
-            'w': int(p.group('width')),
-            'h': int(p.group('height'))}
+                'world': self.getWorldFileExt(tmp[1]),
+                'dir': str(imgDir),
+                'name': str(imgName),
+                'x': float(p.group('x')) / -1000.0,
+                'y': float(p.group('y')) / 1000.0,
+                'ps': float(p.group('pxsize')) / 1000.0,
+                'w': int(p.group('width')),
+                'h': int(p.group('height'))}
