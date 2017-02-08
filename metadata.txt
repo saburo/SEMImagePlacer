@@ -10,7 +10,7 @@
 name=SEM Image Placer
 qgisMinimumVersion=2.0
 description=This plugin places SEM images by their own coordinates
-version=0.1
+version=0.1.2
 author=Kouki Kitajima
 email=saburo@geology.wisc.edu
 

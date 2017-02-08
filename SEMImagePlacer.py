@@ -564,6 +564,8 @@ class SEMImagePlacer:
         rlayer.setCrs(QgsCoordinateReferenceSystem(self.crsId, self.crsType))
         QgsMapLayerRegistry.instance().addMapLayer(rlayer)
 
+        return rlayer
+
     def addImageFiles(self, imgData):
         clipFlag = True
         try:
@@ -571,9 +573,9 @@ class SEMImagePlacer:
         except:
             clipFlag = False
             imgPath = os.path.join(imgData['dir'], imgData['img'])
-        self.addImgLayer(imgPath, imgData['name'])
 
-        l = self.canvas.currentLayer()
+        l = self.addImgLayer(imgPath, imgData['name'])
+
         if clipFlag:
             l.setDrawingStyle('PalettedColor');
             # clip out scale bars
