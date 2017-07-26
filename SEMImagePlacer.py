@@ -505,13 +505,14 @@ class SEMImagePlacer:
         imgPath = os.path.join(img['dir'], img['img'])
         destnodata = '-dstnodata 0'  # black pixcels become transparent
         destnodata = ''  # just cropped out
-        form = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q \
-                 -cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
+        tmp = r'"{0}" -overwrite -s_srs "{1}" -t_srs "{1}" {2} -q ' \
+            + r'-cutline "{3}" -dstalpha -of GTiff "{4}" "{5}"'
         self.checkandDeleteFiles(img['clip'])
         self.makeClippingShapeFiles(img)
-        cmd = form.format(self.gdalwarp, self.crs, destnodata,
-                          shapeFilePath, imgPath, img['clip'])
-        res = subprocess.call(cmd, shell=True)
+        cmd = tmp.format(self.gdalwarp, self.crs, destnodata,
+                         shapeFilePath, imgPath, img['clip'])
+
+        return subprocess.call(cmd, shell=True)
 
     def rotateCoordinates(self, x, y, sinD, cosD):
         rx = x * cosD - y * sinD
